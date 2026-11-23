@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Справочник по инженерии данных</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Инженерия данных</h1>
+    <div class="controls">
+      <label for="search">Поиск по терминам</label>
+      <input id="search" type="search" placeholder="Например, OLTP">
+      <fieldset>
+        <legend>Режим повторения</legend>
+        <label><input type="radio" name="mode" value="recall" checked> Быстро вспомнить</label>
+        <label><input type="radio" name="mode" value="quiz"> Проверить себя</label>
+      </fieldset>
+      <label for="section">Раздел</label>
+      <select id="section">
+        <option value="">Все темы</option>
+        <option>Онлайн-курс</option>
+        <option>Университет</option>
+      </select>
+    </div>
+    <p id="status" role="status"></p>
+    <div id="cards"></div>
+  </main>
+</body>
+</html>
