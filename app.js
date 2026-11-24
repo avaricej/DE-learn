@@ -10,9 +10,9 @@ function element(tag, text) {
   return node;
 }
 
-function disclosure(label, text) {
+function disclosure(label, text, tag = 'p') {
   const details = document.createElement('details');
-  details.append(element('summary', label), element('p', text));
+  details.append(element('summary', label), element(tag, text));
   return details;
 }
 
@@ -32,6 +32,20 @@ function renderCard(card, quiz) {
       summary.append(element('li', line));
     }
     article.append(summary, element('p', card.example), element('p', card.diagram));
+  }
+
+  if (card.practice) {
+    const { dialect, example, question, hint, answer } = card.practice;
+    article.append(element('h3', 'Практика · ' + dialect));
+    if (quiz) {
+      article.append(
+        element('p', question),
+        disclosure('Подсказка к практике', hint),
+        disclosure('Ответ на практику', answer, 'pre'),
+      );
+    } else {
+      article.append(element('pre', example));
+    }
   }
 
   const sources = document.createElement('ul');

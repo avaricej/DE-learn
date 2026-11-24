@@ -11,5 +11,6 @@ fieldset { margin: .5rem 0; border: 1px solid #cbd5e4; border-radius: .4rem; dis
 article + article { margin-top: 1rem; }
 details { border-top: 1px solid #cbd5e4; padding: .65rem 0; }
 summary { cursor: pointer; font-weight: 650; }
+pre { overflow-x: auto; padding: .75rem; background: #f2f5fa; border-radius: .4rem; }
 a { color: #184a9d; }
 :focus-visible { outline: 3px solid #2258b0; outline-offset: 3px; }
