@@ -58,18 +58,19 @@
   },
   {
     "id": "partitions",
-    "title": "Партиции — какие месяцы читать?",
-    "terms": ["Теория БД", "партиционирование", "ключ партиционирования", "partition pruning", "отсечение партиций"],
+    "title": "Партиции — по диапазону, списку или хешу",
+    "terms": ["Теория БД", "партиционирование", "ключ партиционирования", "partition pruning", "отсечение партиций", "RANGE", "LIST", "HASH", "DEFAULT"],
     "summary": [
-      "Партиция — часть таблицы. При разбиении по дате заказа месячная партиция содержит заказы за один месяц.",
+      "Партиция — часть таблицы. RANGE группирует по диапазонам, LIST — по спискам значений, HASH — по остатку от деления хеша ключа.",
       "Условие по полю разбиения помогает базе пропустить ненужные партиции. Для столбца типа DATE условие order_date = DATE '2026-11-12' указывает на ноябрь.",
-      "Удаление партиции убирает все её строки из таблицы. Это подходит, когда из срока хранения выходит целый месяц."
+      "Удаление партиции убирает все её строки из таблицы. Это подходит, когда из срока хранения выходит целый месяц.",
+      "Партиция DEFAULT для RANGE или LIST принимает строки, которым не подошла ни одна из остальных партиций."
     ],
     "example": "Для отчёта за октябрь и ноябрь база может прочитать две месячные партиции. При удалении только первой недели января остальные заказы января нужно сохранить.",
     "diagram": "Условие по дате заказа → выбор подходящих партиций → чтение строк",
     "practice": {
       "dialect": "PostgreSQL",
-      "example": "-- orders уже создана с PARTITION BY RANGE (order_date).\nCREATE TABLE orders_2026_11 PARTITION OF orders\nFOR VALUES FROM (DATE '2026-11-01') TO (DATE '2026-12-01');",
+      "example": "-- Родитель orders уже объявлен с PARTITION BY RANGE (order_date).\nCREATE TABLE orders_2026_11 PARTITION OF orders\nFOR VALUES FROM (DATE '2026-11-01') TO (DATE '2026-12-01');\n\n-- Родитель orders_by_city объявлен с PARTITION BY LIST (city).\nCREATE TABLE orders_center PARTITION OF orders_by_city\nFOR VALUES IN ('Москва', 'Тверь');\nCREATE TABLE orders_other PARTITION OF orders_by_city DEFAULT;\n\n-- Родитель orders_by_customer объявлен с PARTITION BY HASH (customer_id).\nCREATE TABLE orders_hash_0 PARTITION OF orders_by_customer\nFOR VALUES WITH (MODULUS 4, REMAINDER 0);\n-- Для полного покрытия при MODULUS 4 нужны также остатки 1, 2 и 3.",
       "question": "Таблица orders разбита по диапазонам дат заказа. Напиши SQL для создания партиции orders_2026_12 на весь декабрь 2026 года.",
       "hint": "FROM включает первый день месяца. TO задаёт первую дату, которая уже не входит в партицию.",
       "answer": "CREATE TABLE orders_2026_12 PARTITION OF orders\nFOR VALUES FROM (DATE '2026-12-01') TO (DATE '2027-01-01');"
@@ -81,6 +82,11 @@
       {
         "section": "Онлайн-курс",
         "title": "Конспект занятия по теме «Партиции»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Table Partitioning",
+        "url": "https://www.postgresql.org/docs/current/ddl-partitioning.html"
       }
     ]
   },
