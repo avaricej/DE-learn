@@ -22,6 +22,7 @@ function renderCard(card, quiz) {
 
   if (quiz) {
     article.append(
+      element('h3', 'Вопрос'),
       element('p', card.question),
       disclosure('Показать подсказку', card.hint),
       disclosure('Показать ответ', card.answer),
@@ -31,12 +32,28 @@ function renderCard(card, quiz) {
     for (const line of card.summary) {
       summary.append(element('li', line));
     }
-    article.append(summary, element('p', card.example), element('p', card.diagram));
+    article.append(element('h3', 'Суть'), summary);
+
+    if (card.takeaway) {
+      const takeaway = element('p', '');
+      const emphasis = element('strong', card.takeaway);
+      emphasis.className = 'takeaway';
+      takeaway.append(emphasis);
+      article.append(element('h3', 'Главное различие'), takeaway);
+    }
+
+    const example = element('p', card.example);
+    example.className = 'example';
+    article.append(element('h3', 'Пример'), example);
+
+    if (card.diagram) {
+      article.append(element('h3', 'Схема'), element('p', card.diagram));
+    }
   }
 
   if (card.practice) {
     const { dialect, example, question, hint, answer } = card.practice;
-    article.append(element('h3', 'Практика · ' + dialect));
+    article.append(element('h3', (quiz ? 'Практика · ' : 'SQL · ') + dialect));
     if (quiz) {
       article.append(
         element('p', question),
