@@ -143,5 +143,53 @@
         "url": "https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT"
       }
     ]
+  },
+  {
+    "id": "index-types",
+    "title": "Типы индексов PostgreSQL — как выбрать под запрос?",
+    "terms": [
+      "Теория БД",
+      "алгоритмы индексов",
+      "B-tree",
+      "Hash",
+      "GIN",
+      "BRIN",
+      "GiST",
+      "SP-GiST"
+    ],
+    "summary": [
+      "B-tree → точное совпадение и диапазоны. Hash → только равенство.",
+      "GIN → поиск элементов внутри значения, например тега в массиве.",
+      "BRIN → пропускает группы блоков по их сводкам, особенно если даты на диске идут примерно по порядку.",
+      "GiST по daterange → пересечение интервалов. SP-GiST по text → поиск по началу строки."
+    ],
+    "example": "Для заказов за ноябрь подойдёт B-tree по order_date. Для тегов заказа в text[] подойдёт GIN по tags.",
+    "diagram": "Условие запроса → тип столбца и оператор → подходящий тип индекса",
+    "question": "Нужно найти заказы по равенству номера и заказы за диапазон дат. Какие условия поддерживает Hash, а какие B-tree?",
+    "hint": "Проверь, требует ли запрос порядка значений.",
+    "answer": "Hash поддерживает равенство. B-tree поддерживает и равенство, и диапазоны. Для каждого запроса индекс должен быть построен по соответствующему столбцу.",
+    "practice": {
+      "dialect": "PostgreSQL",
+      "example": "-- Примеры для существующей таблицы orders с указанными столбцами.\n-- B-tree: диапазон дат, order_date имеет тип date.\nCREATE INDEX orders_date_btree ON orders USING BTREE (order_date);\n-- WHERE order_date >= DATE '2026-11-01' AND order_date < DATE '2026-12-01'\n\n-- Hash: точное совпадение.\nCREATE INDEX orders_order_id_hash ON orders USING HASH (order_id);\n-- WHERE order_id = 314\n\n-- GIN: tags имеет тип text[].\nCREATE INDEX orders_tags_idx ON orders USING GIN (tags);\n-- WHERE tags @> ARRAY['gift']\n\n-- BRIN: альтернатива для большой таблицы, упорядоченной примерно по дате.\nCREATE INDEX orders_date_brin ON orders USING BRIN (order_date);\n\n-- GiST: delivery_window имеет тип daterange.\nCREATE INDEX orders_delivery_window_idx ON orders USING GIST (delivery_window);\n-- WHERE delivery_window && daterange('2026-12-11', '2026-12-13', '[)')\n\n-- SP-GiST: order_code имеет тип text.\nCREATE INDEX orders_code_idx ON orders USING SPGIST (order_code);\n-- WHERE order_code ^@ 'MSK-'",
+      "question": "В таблице shipments коды отправлений хранятся в столбце tracking_code типа text. Напиши SQL для создания SP-GiST-индекса shipments_tracking_code_idx и условие поиска кодов, начинающихся с SPB-.",
+      "hint": "В CREATE INDEX укажи метод SPGIST, а в WHERE используй оператор «начинается с».",
+      "answer": "CREATE INDEX shipments_tracking_code_idx\nON shipments USING SPGIST (tracking_code);\n\n-- Условие поиска:\nWHERE tracking_code ^@ 'SPB-'"
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «Индексы: алгоритмы»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Index Types",
+        "url": "https://www.postgresql.org/docs/current/indexes-types.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · SP-GiST",
+        "url": "https://www.postgresql.org/docs/current/spgist.html"
+      }
+    ]
   }
 ]
