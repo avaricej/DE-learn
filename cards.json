@@ -197,5 +197,47 @@
         "url": "https://www.postgresql.org/docs/current/spgist.html"
       }
     ]
+  },
+  {
+    "id": "acid",
+    "title": "ACID — что гарантирует транзакция?",
+    "terms": [
+      "Теория БД",
+      "транзакция",
+      "атомарность",
+      "согласованность",
+      "изоляция",
+      "долговечность",
+      "BEGIN",
+      "COMMIT",
+      "ROLLBACK",
+      "READ COMMITTED",
+      "WAL"
+    ],
+    "takeaway": "Атомарность — все изменения вместе. Долговечность — зафиксированные изменения сохраняются после сбоя.",
+    "summary": [
+      "Атомарность → изменения транзакции сохраняются или отменяются целиком.",
+      "Согласованность → после успешной транзакции соблюдаются заданные правила данных.",
+      "Изоляция → определяет, какие изменения видны параллельным транзакциям.",
+      "Долговечность → зафиксированные изменения сохраняются после сбоя."
+    ],
+    "example": "Магазин отменяет создание заказа, если остаток не удалось уменьшить. Другой сеанс при READ COMMITTED видит прежний остаток до COMMIT.",
+    "diagram": "BEGIN → создание заказа и обновление остатка → COMMIT при успехе или ROLLBACK при отмене",
+    "question": "Перевод между двумя счетами уже подтверждён, затем процесс базы аварийно завершился. Какое свойство ACID отвечает за сохранение перевода после восстановления?",
+    "hint": "Перевод уже был зафиксирован. Вопрос о том, переживёт ли он сбой.",
+    "answer": "Долговечность. После успешной фиксации перевод должен сохраниться при восстановлении после сбоя.",
+    "practice": {
+      "dialect": "PostgreSQL",
+      "example": "-- Выполни один раз в учебной БД, где схемы acid_demo ещё нет.\nCREATE SCHEMA acid_demo;\n\nCREATE TABLE acid_demo.inventory (\n    product_id bigint PRIMARY KEY,\n    stock integer NOT NULL CHECK (stock >= 0)\n);\n\nCREATE TABLE acid_demo.orders (\n    order_id bigint PRIMARY KEY,\n    product_id bigint NOT NULL REFERENCES acid_demo.inventory (product_id)\n);\n\nINSERT INTO acid_demo.inventory VALUES (42, 5), (99, 0);\n\n-- Атомарность: товара 99 нет в наличии.\nBEGIN;\nINSERT INTO acid_demo.orders VALUES (314, 99);\nUPDATE acid_demo.inventory\nSET stock = stock - 1\nWHERE product_id = 99 AND stock > 0;\n-- UPDATE 0 — приложение проверяет число строк и отменяет заказ.\nROLLBACK;\nSELECT * FROM acid_demo.orders WHERE order_id = 314; -- 0 строк\n\n-- Проверка CHECK: выполни эту команду отдельно, вне BEGIN.\n-- UPDATE acid_demo.inventory SET stock = -1 WHERE product_id = 42;\n-- PostgreSQL отклонит изменение.\n\n-- Изоляция: выполни команды в двух подключениях к той же БД.\n-- Сеанс A:\nBEGIN;\nUPDATE acid_demo.inventory SET stock = 4 WHERE product_id = 42;\n\n-- Сеанс B:\nBEGIN ISOLATION LEVEL READ COMMITTED;\nSELECT stock FROM acid_demo.inventory WHERE product_id = 42; -- 5\n\n-- Сеанс A:\nCOMMIT;\n\n-- Сеанс B:\nSELECT stock FROM acid_demo.inventory WHERE product_id = 42; -- 4\nCOMMIT;\n\n-- Долговечность при стандартных настройках PostgreSQL.\nBEGIN;\nINSERT INTO acid_demo.orders VALUES (315, 42);\nCOMMIT;\n-- После восстановления от сбоя процесса следующий запрос вернёт заказ.\nSELECT * FROM acid_demo.orders WHERE order_id = 315;",
+      "question": "В учебной схеме acid_demo внутри транзакции создали заказ, но UPDATE остатка изменил 0 строк. Напиши команду, которая завершит транзакцию и отменит создание заказа.",
+      "hint": "Нужно отменить все изменения после BEGIN.",
+      "answer": "ROLLBACK;"
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия по теме «ACID»"
+      }
+    ]
   }
 ]
