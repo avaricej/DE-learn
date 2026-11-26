@@ -372,5 +372,59 @@
         "url": "https://www.postgresql.org/docs/current/routine-vacuuming.html#VACUUM-FOR-SPACE-RECOVERY"
       }
     ]
+  },
+  {
+    "id": "wal",
+    "title": "WAL — как PostgreSQL восстанавливает заказы после сбоя",
+    "terms": [
+      "Теория БД",
+      "Write-Ahead Log",
+      "журнал предзаписи",
+      "checkpoint",
+      "контрольная точка",
+      "REDO",
+      "LSN",
+      "долговечность"
+    ],
+    "takeaway": "При стандартном COMMIT WAL уже сохранён на диске, а обновлённая страница таблицы может ещё быть в памяти.",
+    "summary": [
+      "Страница таблицы — блок её файла. PostgreSQL меняет копию страницы в памяти, а запись на диск может произойти позже.",
+      "WAL сохраняет сведения об изменениях. После сбоя PostgreSQL может применить их к старым страницам на диске.",
+      "Контрольная точка указывает позицию REDO, с которой начинается восстановление по WAL.",
+      "LSN — позиция в журнале WAL. Её можно сравнить до и после записи заказа."
+    ],
+    "example": "Заказ № 315 подтверждён, но его страница ещё в памяти. После сбоя PostgreSQL применяет сохранённое в WAL изменение.",
+    "diagram": "WAL сохранён на диске → COMMIT подтверждён → страница таблицы может быть записана позже",
+    "question": "Заказ № 314 уже есть в файле таблицы к завершению контрольной точки. Заказ № 315 подтверждён позднее, но его страница перед сбоем была только в памяти. Какой заказ нужно восстановить по WAL?",
+    "hint": "Сравни, для какого заказа файл таблицы ещё не содержит изменение.",
+    "answer": "№ 315. Изменение сохранилось в WAL, и PostgreSQL может применить его при восстановлении.",
+    "practice": {
+      "dialect": "PostgreSQL",
+      "example": "-- Выполни в учебной базе, где схемы wal_demo ещё нет.\nCREATE SCHEMA wal_demo;\nCREATE TABLE wal_demo.orders (order_id bigint PRIMARY KEY);\n\nSELECT pg_current_wal_insert_lsn() AS before_insert;\n\nBEGIN;\nINSERT INTO wal_demo.orders VALUES (316);\nCOMMIT;\n\nSELECT pg_current_wal_insert_lsn() AS after_commit;\n-- after_commit находится дальше по журналу.\n-- WAL общий для экземпляра PostgreSQL: между замерами\n-- журнал мог пополниться и записями других сеансов.",
+      "question": "Какой LSN будет дальше по журналу в этом опыте: before_insert или after_commit? Почему?",
+      "hint": "Подумай, когда INSERT и COMMIT добавляют записи в WAL.",
+      "answer": "after_commit\n-- К этому замеру INSERT и COMMIT уже добавили записи в WAL."
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «WAL»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Write-Ahead Logging",
+        "url": "https://www.postgresql.org/docs/current/wal-intro.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Контрольные точки",
+        "url": "https://www.postgresql.org/docs/current/wal-configuration.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Функции WAL",
+        "url": "https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-BACKUP"
+      }
+    ]
   }
 ]
