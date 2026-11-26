@@ -320,5 +320,57 @@
         "url": "https://www.comp.nus.edu.sg/~gilbert/pubs/BrewersConjecture-SigAct.pdf"
       }
     ]
+  },
+  {
+    "id": "mvcc",
+    "title": "MVCC — почему запросы видят разные версии строки?",
+    "terms": [
+      "Теория БД",
+      "многоверсионность",
+      "снимок",
+      "версия строки",
+      "xmin",
+      "VACUUM",
+      "REPEATABLE READ"
+    ],
+    "takeaway": "Снимок выбирает видимую версию строки. VACUUM может убрать старую версию, когда она больше не нужна снимкам.",
+    "summary": [
+      "UPDATE создаёт новую версию той же строки. Старая версия может оставаться видимой старому снимку.",
+      "xmin показывает ID транзакции, которая создала видимую версию строки.",
+      "VACUUM позволяет повторно использовать место версий, которые больше не нужны транзакциям."
+    ],
+    "example": "Сеанс A открыл снимок с остатком 5. Сеанс B зафиксировал 4. Новый запрос C видит 4, а сеанс A в той же транзакции REPEATABLE READ видит 5.",
+    "diagram": "Версия с остатком 5 → UPDATE и COMMIT → версия с остатком 4",
+    "question": "Можно ли убрать версию строки с остатком 5, пока открытый снимок сеанса A ещё может её прочитать?",
+    "hint": "Вспомни, к какой версии обратится повторный SELECT в сеансе A.",
+    "answer": "Нет. Версия с остатком 5 нужна сеансу A. VACUUM может освободить её место после того, как версия перестанет быть нужна снимкам.",
+    "practice": {
+      "dialect": "PostgreSQL",
+      "example": "-- Выполни один раз в учебной БД. Затем открой сеансы A и B.\nCREATE TABLE mvcc_demo_inventory (\n    product_id integer PRIMARY KEY,\n    stock integer NOT NULL\n);\nINSERT INTO mvcc_demo_inventory VALUES (42, 5);\n-- Подготовка должна быть зафиксирована до начала опыта.\n\n-- Сеанс A:\nBEGIN ISOLATION LEVEL REPEATABLE READ;\nSELECT stock, xmin FROM mvcc_demo_inventory WHERE product_id = 42;\n\n-- Сеанс B:\nBEGIN;\nUPDATE mvcc_demo_inventory SET stock = 4 WHERE product_id = 42;\nCOMMIT;\n\n-- Сеанс A: по-прежнему 5 и прежний xmin.\nSELECT stock, xmin FROM mvcc_demo_inventory WHERE product_id = 42;\n\n-- Сеанс B: 4 и другой xmin.\nSELECT stock, xmin FROM mvcc_demo_inventory WHERE product_id = 42;\n\n-- Сеанс A:\nCOMMIT;\n\n-- Сеанс B: вне транзакции, после окончания чтения в A.\nVACUUM mvcc_demo_inventory;",
+      "question": "Напиши SELECT, который покажет остаток и ID транзакции, создавшей видимую версию товара № 42.",
+      "hint": "К stock добавь системный столбец с ID транзакции-создателя.",
+      "answer": "SELECT stock, xmin\nFROM mvcc_demo_inventory\nWHERE product_id = 42;"
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «MVCC»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · MVCC и снимки",
+        "url": "https://www.postgresql.org/docs/current/mvcc-intro.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Системные столбцы",
+        "url": "https://www.postgresql.org/docs/current/ddl-system-columns.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · VACUUM",
+        "url": "https://www.postgresql.org/docs/current/routine-vacuuming.html#VACUUM-FOR-SPACE-RECOVERY"
+      }
+    ]
   }
 ]
