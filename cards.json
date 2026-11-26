@@ -239,5 +239,50 @@
         "title": "Конспект занятия по теме «ACID»"
       }
     ]
+  },
+  {
+    "id": "transaction-isolation",
+    "title": "Уровни изоляции PostgreSQL — какие изменения видны?",
+    "terms": [
+      "Теория БД",
+      "READ UNCOMMITTED",
+      "READ COMMITTED",
+      "REPEATABLE READ",
+      "SERIALIZABLE",
+      "грязное чтение",
+      "неповторяемое чтение",
+      "фантомное чтение",
+      "40001"
+    ],
+    "takeaway": "READ COMMITTED — новый снимок на каждый SELECT. REPEATABLE READ — один снимок для повторных чтений в транзакции.",
+    "summary": [
+      "READ UNCOMMITTED в PostgreSQL работает как READ COMMITTED. Оба исключают грязное чтение.",
+      "READ COMMITTED → каждый SELECT получает новый снимок и может увидеть изменения между запросами.",
+      "REPEATABLE READ → повторные чтения используют один снимок. В PostgreSQL возможен конфликт решений даже при обновлении разных строк.",
+      "SERIALIZABLE → PostgreSQL может отклонить конфликтующую транзакцию. При 40001 приложение повторяет её целиком с новой проверкой."
+    ],
+    "example": "Две задачи очистки видят две версии витрины. Каждая хочет отключить свою. SERIALIZABLE не даст обеим зафиксировать изменения и оставить витрину без версии для отката.",
+    "diagram": "40001 → новая транзакция → заново проверить число доступных версий → обновить только при необходимости",
+    "question": "Пайплайн обновил число заказов со 100 до 120 и ещё не выполнил COMMIT. Какое число увидит отчёт на READ UNCOMMITTED в PostgreSQL?",
+    "hint": "Вспомни, какому режиму соответствует READ UNCOMMITTED в PostgreSQL.",
+    "answer": "100. В PostgreSQL READ UNCOMMITTED ведёт себя как READ COMMITTED: незавершённое изменение пайплайна не видно.",
+    "practice": {
+      "dialect": "PostgreSQL",
+      "example": "-- Настройка в учебной базе. Выполни один раз перед опытом.\nCREATE TABLE isolation_demo_mart_versions (\n    version_id integer PRIMARY KEY,\n    available_for_rollback boolean NOT NULL\n);\nINSERT INTO isolation_demo_mart_versions VALUES (7, true), (8, true);\n\n-- Открой два сеанса и начни транзакции в обоих.\nBEGIN ISOLATION LEVEL SERIALIZABLE;\n\n-- Пока ни один сеанс не сделал COMMIT:\n-- Сеанс A выполнит запрос как написано.\n-- Сеанс B выполнит тот же запрос, подставив 8 вместо 7.\n-- Условие в WHERE выполняет проверку прямо в SQL.\nUPDATE isolation_demo_mart_versions\nSET available_for_rollback = false\nWHERE version_id = 7\n  AND available_for_rollback\n  AND (SELECT count(*) FROM isolation_demo_mart_versions\n       WHERE available_for_rollback) > 1;\n\n-- Попробуй зафиксировать изменения в обоих сеансах.\nCOMMIT;\n-- Одну транзакцию PostgreSQL отклонит с 40001.\n-- При повторе всей транзакции доступна только одна версия.\n-- Условие не выполнится и UPDATE затронет 0 строк.",
+      "question": "Задача очистки получила 40001 после проверки числа версий. Какую строку BEGIN нужно использовать для новой попытки и что нужно сделать после неё?",
+      "hint": "Повтор сохраняет уровень изоляции и заново принимает решение по текущим данным.",
+      "answer": "BEGIN ISOLATION LEVEL SERIALIZABLE;\n-- Заново выполнить проверку и условное обновление, затем COMMIT."
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «Уровни изоляции»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · Transaction Isolation",
+        "url": "https://www.postgresql.org/docs/current/transaction-iso.html"
+      }
+    ]
   }
 ]
