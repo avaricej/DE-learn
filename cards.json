@@ -467,5 +467,58 @@
         "url": "https://duckdb.org/docs/data/parquet"
       }
     ]
+  },
+  {
+    "id": "backups",
+    "title": "Бэкапы PostgreSQL — как проверить восстановление",
+    "terms": [
+      "Теория БД",
+      "резервная копия",
+      "бэкап",
+      "дамп",
+      "pg_dump",
+      "pg_restore",
+      "PITR",
+      "архив WAL"
+    ],
+    "takeaway": "Дамп возвращает состояние на момент своего снимка. PITR использует базовую копию и архив WAL, чтобы восстановиться на выбранный момент.",
+    "summary": [
+      "Бэкап позволяет вернуть данные из сохранённой копии, даже если ошибочное удаление уже дошло до реплики.",
+      "pg_dump -Fc создаёт логический архив. pg_restore -d загружает его в указанную базу.",
+      "PITR применяет WAL поверх физической базовой копии и может остановиться до ошибочного изменения."
+    ],
+    "example": "Базовая копия на 08:00. Заказ № 314 создан в 08:30, ошибочное удаление зафиксировано в 09:00. При полном архиве WAL восстановление на 08:59 включает заказ и исключает удаление.",
+    "diagram": "PITR: базовая копия на 08:00 → архив WAL → состояние на 08:59",
+    "question": "В копии на 08:00 ещё нет заказа, созданного в 08:30. Какие данные нужны, чтобы вернуть его и остановиться до удаления в 09:00?",
+    "hint": "Вспомни, где PostgreSQL сохраняет изменения, произошедшие после базовой копии.",
+    "answer": "Физическая базовая копия и непрерывный архив WAL, достаточный для восстановления до 08:59.",
+    "practice": {
+      "dialect": "Терминал · PostgreSQL",
+      "example": "# Нужны запущенный учебный PostgreSQL, клиентские утилиты в PATH\n# и подключение под ролью, которая может создавать базы.\n# Имена баз и файла должны быть свободны.\ncreatedb orders_demo\npsql -d orders_demo -v ON_ERROR_STOP=1 -c \"CREATE TABLE orders (order_id integer PRIMARY KEY); INSERT INTO orders VALUES (314);\"\n\npg_dump -Fc -f orders.dump orders_demo\ncreatedb orders_restore_test\npg_restore --exit-on-error -d orders_restore_test orders.dump\n\npsql -d orders_restore_test -c \"SELECT order_id FROM orders;\"\n# Ожидаемый результат: 314.",
+      "question": "Есть архив orders.dump и уже создана пустая база orders_restore_check. Напиши команду восстановления в эту базу.",
+      "hint": "В pg_restore флаг -d указывает базу назначения, а последний аргумент — файл архива.",
+      "answer": "pg_restore -d orders_restore_check orders.dump"
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «Бэкапы»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · PITR",
+        "url": "https://www.postgresql.org/docs/current/continuous-archiving.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · pg_dump",
+        "url": "https://www.postgresql.org/docs/current/app-pgdump.html"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "PostgreSQL · pg_restore",
+        "url": "https://www.postgresql.org/docs/current/app-pgrestore.html"
+      }
+    ]
   }
 ]
