@@ -426,5 +426,46 @@
         "url": "https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-BACKUP"
       }
     ]
+  },
+  {
+    "id": "table-storage",
+    "title": "Типы хранения таблиц — строки и столбцы",
+    "terms": [
+      "Теория БД",
+      "строковое хранение",
+      "колоночное хранение",
+      "Parquet",
+      "DuckDB",
+      "projection pushdown"
+    ],
+    "takeaway": "Строковое хранение — поля одной записи вместе. Колоночное — значения одного столбца вместе.",
+    "summary": [
+      "Строковое хранение удобно, когда нужны несколько полей одной записи, например дата, сумма и адрес заказа.",
+      "Колоночное хранение позволяет читать нужные столбцы отдельно, например только суммы для SUM(amount).",
+      "При чтении Parquet DuckDB выбирает столбцы, нужные для результата и условий запроса."
+    ],
+    "example": "Отчёт о выручке за день читает order_date для фильтра и amount для суммы. Адреса доставки и номера заказов ему не нужны.",
+    "diagram": "Запрос выручки → order_date для WHERE + amount для SUM → результат",
+    "question": "Дашборд считает среднюю сумму заказа по всем строкам файла. Какой столбец нужен, если фильтра нет?",
+    "hint": "Посмотри, к какому полю применяется агрегатная функция.",
+    "answer": "Только amount. Дата, номер и адрес в этом запросе не используются.",
+    "practice": {
+      "dialect": "DuckDB SQL",
+      "example": "-- Выполни в учебной папке без файла orders_storage_demo.parquet.\nCOPY (\n    SELECT * FROM (VALUES\n        (314, DATE '2026-11-26', 900, 'ул. Лесная'),\n        (315, DATE '2026-11-26', 600, 'ул. Садовая'),\n        (316, DATE '2026-11-27', 400, 'ул. Полевая')\n    ) AS orders(order_id, order_date, amount, delivery_address)\n) TO 'orders_storage_demo.parquet' (FORMAT PARQUET);\n\nSELECT SUM(amount) AS revenue\nFROM read_parquet('orders_storage_demo.parquet')\nWHERE order_date = DATE '2026-11-26';\n-- Результат: 1500. Для расчёта нужны order_date и amount.",
+      "question": "Напиши запрос выручки за 27 ноября 2026 года к файлу orders_storage_demo.parquet.",
+      "hint": "Используй SUM(amount), read_parquet и фильтр по order_date.",
+      "answer": "SELECT SUM(amount) AS revenue\nFROM read_parquet('orders_storage_demo.parquet')\nWHERE order_date = DATE '2026-11-27';\n-- Результат: 400."
+    },
+    "sources": [
+      {
+        "section": "Онлайн-курс",
+        "title": "Конспект занятия «Типы хранения таблиц»"
+      },
+      {
+        "section": "Онлайн-курс",
+        "title": "DuckDB · Reading and Writing Parquet Files",
+        "url": "https://duckdb.org/docs/data/parquet"
+      }
+    ]
   }
 ]
